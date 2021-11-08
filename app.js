@@ -1,6 +1,7 @@
+const e = require("express")
 const express = require("express")
 const app = express()
-const port = 5000
+const port = 3000
 
 app.use(express.json())
 
@@ -8,7 +9,7 @@ app.use(express.json())
 //post 
 const todo = 
 [
-   { id: 1 , taskName: "sleep", isComplated: false },
+   { id: 1 , taskName: "sleep", isComplated: true },
    { id: 2 , taskName: "write", isComplated: false },
    { id: 3 , taskName: "read",  isComplated:  false }
 ]
@@ -20,11 +21,10 @@ app.get("/todo" , (req , res) =>{
         res.json(todo)
     })
 
-//read special item...
-app.get("/todo" , (req , res) =>{
-    const{taskName} = req.query;
+//read is completed
+app.get("/todos" , (req , res) =>{
     const found = todo.find((element) =>{
-        return element.taskName === taskName;
+        return element.isComplated === true;
     });
     if(found){
         res.status(200)
@@ -38,57 +38,98 @@ app.get("/todo" , (req , res) =>{
 
 
 
-//create -> add one todo..
+
+// create -> add one todo
 app.post("/create" , (req , res) =>{
-    res.send("post Request Called")
-    const{id , taskName , isComplated} = req.body
-    todo.push({id: 6, taskName: "sport" , isComplated: true})
+     let newTodo =   
+    {
+        id: todo.length +1 ,
+        taskName: req.body.taskName ,
+        isComplated: false
+    }
+    todo.push(newTodo);
     res.status(201)
-    res.json({id, taskName , isComplated})
+    res.json(todo)
 })
 
-// create -> without
-app.post("/create" , (req , res) =>{
-    const{id , taskName , isComplated} = req.body
-    todo.push({id , taskName , isComplated})
-    res.status(201)
-    res.json({id, taskName , isComplated})
-})
 
 
 //update
-// update -> isCompleted... or not
-app.put('/update' , (req , res)=>{
-    const{isComplated} = req.body;
-    todo.forEach((element) =>{
-     element.isComplated = isComplated;
-      
-    })
-    res.status(200)
-    res.json(todo);
-})
-
 // update -> edit task name ...
 app.put('/updateName' , (req , res)=>{
-    const{id , taskName} = req.body;
-    todo.forEach((element) =>{
-        if (element.id === id) {
-        element.taskName = taskName;
-        }
+    let found = todo.find((e) =>{
+        return e.id == req.query.id;
     })
-    res.status(200)
-    res.json(todo);
+    if (found) {
+        let upName = {
+            id: found.id,
+            taskName: req.body.taskName,
+            isComplated: false
+        }
+        let up = todo.indexOf(found)
+        todo.splice(up , 1 , upName)
+        res.status(200)
+        res.json(todo)
+    }
+    else{
+        res.status(404)
+        res.json('not found')
+    }
 })
 
-//delete
+
+//.............
+
+// update -> isCompleted...
+app.put('/update' , (req , res)=>{
+    let found = todo.find((e) =>{
+        return e.id == req.query.id;
+    })
+    if (found) {
+        let upComp = {
+            id: found.id,
+            taskName: found.taskName,
+            isComplated: req.body.isComplated
+        }
+        let up = todo.indexOf(found)
+        todo.splice(up , 1 , upComp)
+        
+        res.json(todo)
+    }
+    else{
+        res.status(404)
+        res.json('not found')
+    }  
+})
+
+
+//..........
+
+//delete ine by on 
 app.delete('/delete',  (req, res)=> {
     const{id, taskName , isComplated} = req.body;
     todo.splice(1 ,1)
-    res.status(200)
-    res.json({id, taskName , isComplated})
+    res.json(todo)
 });
 
+//delete use id query
+app.delete("/del" , (req , res) =>{
+    let del = todo.find((e) => {
+        return e.id == req.query.id;
+      });
+      if (del) {
+        let dle = todo.indexOf(del);
+        todo.splice(dle, 1);
+        res.json(todo);
+      } else {
+        res.status(404);
+        res.json("not found");
+      }
+    
+})
 
+
+//..........
 app.listen(port, () =>{
     console.log(`run on port ${port}`);
 })
